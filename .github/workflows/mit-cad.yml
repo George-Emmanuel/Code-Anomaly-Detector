@@ -1,0 +1,43 @@
+name: MIT-CAD PR Scoring
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+      - name: Install requirements
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Generate commit diff (simplified)
+        run: |
+          # For demo: create a synthetic single-commit CSV for the PR using git
+          git fetch origin ${{ github.event.pull_request.head.ref }}
+          DIFF=$(git --no-pager diff origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.ref }})
+          python - <<'PY'
+import csv, os, sys
+diff = os.environ.get('DIFF','')
+with open('pr_commit.csv','w',newline='') as f:
+    writer = csv.DictWriter(f, fieldnames=['commit_id','author','timestamp','files_changed','diff'])
+    writer.writeheader()
+    writer.writerow({'commit_id':'pr1','author':os.getenv('GITHUB_ACTOR','unknown'),'timestamp':'','files_changed':'','diff':diff})
+PY
+      - name: Download model (placeholder)
+        run: |
+          echo "In production, pull model from secure artifacts or model registry"
+          # For demo, we train quickly (not ideal for real CI)
+          python generate_synthetic.py
+          python train.py --input sample_commits.csv --model out/model.joblib
+      - name: Score PR
+        run: |
+          python score.py --model out/model.joblib --input pr_commit.csv --output out/pr_scores.csv
+      - name: Post result
+        run: |
+          cat out/pr_scores.csv
+          # In prod: fail the job or post a review if anomaly_score exceeds threshold
